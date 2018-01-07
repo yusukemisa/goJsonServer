@@ -1,0 +1,107 @@
+<html>
+
+<head>
+  <title>JSON Cliant</title>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h2>JSONをPOSTするアレ</h2>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            使用方法
+          </div>
+          <div class="panel-body">
+            <ul>
+              <li>送信先にURLを入力</li>
+              <li>リクエストボディ欄にPOSTするJSONを指定</li>
+              <li>送信ボタン押下</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form id="request" role="form">
+      <div class="row">
+        <div class="col-lg-6">
+          <label for="requestUrl">送信先(http://は不要)</label>
+          <input type="text" class="form-control" id="requestUrl" placeholder="http://などのプロトコルを除いたURLを入力">
+          <input type="submit" value="送信" class="btn btn-default" />
+        </div>
+        <div class="col-lg-6">
+          <label for="responseSumally">送信結果</label>
+          <textarea rows="3" style="overflow:auto;white-space: pre" id="responseSumally" readonly class="form-control"></textarea>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="form-group">
+            <label for="requestBody">リクエストボディ</label>
+            <textarea rows="20" style="overflow:auto;white-space: pre" id="requestBody" class="form-control" placeholder="JSON形式で入力"></textarea>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <label for="responseBody">レスポンスボディ</label>
+          <textarea rows="20" style="overflow:auto;white-space: pre" id="responseBody" readonly class="form-control">
+            </textarea>
+        </div>
+      </div>
+    </form>
+  </div>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script>
+  $(function(){
+    let socket = null;
+    let responseSumally = $("#responseSumally");
+    let responseBody = $("#responseBody");
+    // 送信ボタン押下時の挙動
+    $("#request").submit(() => {
+      const requestUrl = $("#requestUrl");
+      const requestBody = $("#requestBody");
+      // リクエスト先かボディが空は送信せず終了
+      if (!requestBody.val() || !requestUrl.val()) {
+        return false;
+      }
+      if (!socket) {
+        console.error("ERROR:WebSocket接続されていません");
+        return false;
+      }
+      // ローカルサーバーに送信
+      infoSocket.send(requestUrl.val());
+      requestSocket.send(requestBody.val());
+      return false;
+    })
+  
+    if (!window["WebSocket"]) {
+      console.error("ERROR:WebSocketに対応していないブラウザなので無理無理無理のかたつむり");
+    } else {
+      // リクエストボディのやりとり用
+      requestSocket = new WebSocket("ws://{{.Host}}/body");
+      requestSocket.onclose = onclose;
+      requestSocket.onmessage = (e) => {
+        responseBody.val(e.data);
+      }
+      
+      // 送信先送信、送信結果受信用
+      infoSocket = new WebSocket("ws://{{.Host}}/sumally");
+      infoSocket.onclose = onclose;
+      infoSocket.onmessage = (e) => {
+        responseSumally.val(e.data);
+      }
+    } 
+  })
+  function onclose() {
+    console.log("ブラウザ->ローカルサーバー間のWebSocket接続が終了しました");
+  }
+  </script>
+</body>
+
+</html>
