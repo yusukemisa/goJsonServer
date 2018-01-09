@@ -59,7 +59,8 @@
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
   <script>
   $(function(){
-    let socket = null;
+    let infoSocket = null;
+    let requestSocket = null;
     let responseSumally = $("#responseSumally");
     let responseBody = $("#responseBody");
     // 送信ボタン押下時の挙動
@@ -70,7 +71,7 @@
       if (!requestBody.val() || !requestUrl.val()) {
         return false;
       }
-      if (!socket) {
+      if (!infoSocket ||!requestSocket) {
         console.error("ERROR:WebSocket接続されていません");
         return false;
       }
@@ -83,18 +84,17 @@
     if (!window["WebSocket"]) {
       console.error("ERROR:WebSocketに対応していないブラウザなので無理無理無理のかたつむり");
     } else {
-      // リクエストボディのやりとり用
-      requestSocket = new WebSocket("ws://{{.Host}}/body");
-      requestSocket.onclose = onclose;
-      requestSocket.onmessage = (e) => {
-        responseBody.val(e.data);
-      }
-      
       // 送信先送信、送信結果受信用
       infoSocket = new WebSocket("ws://{{.Host}}/sumally");
       infoSocket.onclose = onclose;
       infoSocket.onmessage = (e) => {
         responseSumally.val(e.data);
+      }
+      // リクエストボディのやりとり用
+      requestSocket = new WebSocket("ws://{{.Host}}/body");
+      requestSocket.onclose = onclose;
+      requestSocket.onmessage = (e) => {
+        responseBody.val(e.data);
       }
     } 
   })
