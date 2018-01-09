@@ -59,8 +59,7 @@
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
   <script>
   $(function(){
-    let infoSocket = null;
-    let requestSocket = null;
+    let socket = null;
     let responseSumally = $("#responseSumally");
     let responseBody = $("#responseBody");
     // 送信ボタン押下時の挙動
@@ -71,13 +70,19 @@
       if (!requestBody.val() || !requestUrl.val()) {
         return false;
       }
-      if (!infoSocket ||!requestSocket) {
+      if (!socket) {
         console.error("ERROR:WebSocket接続されていません");
         return false;
       }
       // ローカルサーバーに送信
-      infoSocket.send(requestUrl.val());
-      requestSocket.send(requestBody.val());
+      // socket.send(JSON.stringify({
+      //   "requestURL": requestUrl.val(),
+      //   "requestBody": requestBody.val()
+      // }));
+      socket.send(JSON.stringify({
+        "requestURL": requestUrl.val()
+      }));
+      //requestSocket.send(requestBody.val());
       return false;
     })
   
@@ -85,22 +90,17 @@
       console.error("ERROR:WebSocketに対応していないブラウザなので無理無理無理のかたつむり");
     } else {
       // 送信先送信、送信結果受信用
-      infoSocket = new WebSocket("ws://{{.Host}}/sumally");
-      infoSocket.onclose = onclose;
-      infoSocket.onmessage = (e) => {
-        responseSumally.val(e.data);
+      socket = new WebSocket("ws://{{.Host}}/post");
+      socket.onclose = () => {
+        console.log("ブラウザ->ローカルサーバー間のWebSocket接続が終了しました");
       }
-      // リクエストボディのやりとり用
-      requestSocket = new WebSocket("ws://{{.Host}}/body");
-      requestSocket.onclose = onclose;
-      requestSocket.onmessage = (e) => {
-        responseBody.val(e.data);
+      socket.onmessage = (e) => {
+        const responseData = JSON.parse(e.data)
+        responseSumally.val(responseData.sumally);
+        responseBody.val(responseData.body);
       }
     } 
   })
-  function onclose() {
-    console.log("ブラウザ->ローカルサーバー間のWebSocket接続が終了しました");
-  }
   </script>
 </body>
 

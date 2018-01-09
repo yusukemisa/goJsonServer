@@ -33,21 +33,15 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
 
 func main() {
-	body := &body{}
-	server := &server{
-		body:    body,
-		send:    make(chan []byte, messageBufferSize),
-		sumally: make(chan []byte, messageBufferSize),
-		host:    make(chan string, 64),
+	var server = &server{
+		request:  make(chan *RequestData),
+		response: make(chan *ResponseData),
 	}
-	body.server = server
-
 	log.Println("リクエスト！")
-	http.Handle("/sumally", server)
-	http.Handle("/body", body)
+	http.Handle("/post", server)
 	http.Handle("/", &templateHandler{filename: "index.html"})
 
-	go server.run()
+	go server.socketIOStart()
 
 	// webサーバー開始
 	if err := http.ListenAndServe(":8888", nil); err != nil {
